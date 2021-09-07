@@ -97,12 +97,14 @@ def parse_contents(contents, filename, date):
             json_data = {"inputs": df.values.tolist()}
             r = requests.post("http://model_server:8000/predict", json=json_data)
             task_id = r.json()['task_id']
+            print("Task id:", task_id, flush=True)
 
             status = "IN_PROGRESS"
             while status != "DONE":
-                print("Result not ready")
+                print("Result not ready", flush=True)
                 r = requests.get(f"http://model_server:8000/predict/{task_id}")
                 status = r.json()['status']
+                time.sleep(2)
 
             preds = np.array(json.loads(r.json())["result"]["outputs"])
 

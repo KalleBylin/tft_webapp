@@ -24,7 +24,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/kallebylin/repo_name">
-    <img src="images/logo.png" alt="Logo" width="80" height="80">
+    <img src="images/logo_hse.jpg" alt="Logo" height="80">
   </a>
 
   <h3 align="center">Higher School of Economics Large Scale ML Final Project</h3>
@@ -32,14 +32,12 @@
   <p align="center">
     This project implements the Temporal Fusion Transformer architecture for interpretable multi-horizon forecasting (Lim et al., 2020). It is a modern attention-based architecture designed for dealing with high-dimensional time series with multiple inputs, missing values and irregular timestamps.
     <br />
-    <a href="https://github.com/kallebylin/repo_name"><strong>Explore the docs »</strong></a>
+    <a href="https://arxiv.org/pdf/1912.09363.pdf"><strong>See original paper »</strong></a>
     <br />
     <br />
-    <a href="https://github.com/kallebylin/repo_name">View Demo</a>
+    <a href="https://github.com/KalleBylin/tft_webapp/issues">Report Bug</a>
     ·
-    <a href="https://github.com/kallebylin/repo_name/issues">Report Bug</a>
-    ·
-    <a href="https://github.com/kallebylin/repo_name/issues">Request Feature</a>
+    <a href="https://github.com/KalleBylin/tft_webapp/issues">Request Feature</a>
   </p>
 </p>
 
@@ -65,7 +63,6 @@
     <li><a href="#usage">Usage</a></li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
     <li><a href="#contact">Contact</a></li>
     <li><a href="#acknowledgements">Acknowledgements</a></li>
   </ol>
@@ -76,19 +73,23 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+![product-screenshot](images/webapp.png)
 
-Here's a blank template to get started:
-**To avoid retyping too much info. Do a search and replace with your text editor for the following:**
-`github_username`, `repo_name`, `twitter_handle`, `email`, `project_title`, `project_description`
+Machine learning is today widely used around the world and has opened up new possibilities to extract deep insights from data and allow machines to make high quality predictions. Still, one of the largest challenges today in ML has to do with the deployment of these algorithms with large scale data. 
+
+Large scale Machine Learning aims to solve these challenges through tools and methods like model optimization, computation parallelism, and scalable deployment.
+
+This project is an example on how a deep learning model can be deployed to a webapp with asynchronous request processing. 
 
 
 ### Built With
 
-* []()
-* []()
-* []()
-
+* [FastAPI](https://fastapi.tiangolo.com/)
+* [Pytorch](https://pytorch.org/)
+* [Celery](https://docs.celeryproject.org/en/stable/index.html)
+* [Redis](https://redis.io/)
+* [Docker](https://www.docker.com/)
+* [Dash](https://plotly.com/dash/open-source/)
 
 
 <!-- GETTING STARTED -->
@@ -96,24 +97,76 @@ Here's a blank template to get started:
 
 To get a local copy up and running follow these simple steps.
 
-### Prerequisites
-
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
 
 ### Installation
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/kallebylin/repo_name.git
+   git clone https://github.com/KalleBylin/tft_webapp.git
    ```
-2. Install NPM packages
-   ```sh
-   npm install
-   ```
+
+This will clone the latest version of the TFT Webapp repository to your machine.
+
+2. Install docker and docker-compose
+
+Make sure you have installed Docker on your machines in order to run this project.
+
+
+###### Run entire app with one command 
+```
+sudo docker-compose up --build
+```
+
+This will start multiple services:
+
+* Sets up a Redis database whcih will be used as a message broker and keep track of the tasks' states.
+* Initializes a Celery app which acts as our task queue so that they can run asynchronously.
+* Starts a model web server with rest api built with FastAPI and listens for messages at localhost:8000. 
+* Deploys a web app that can be opened in the browser and used to upload a batch of data and then receives predictions from the model web server.
+
+
+#### Test over REST API
+
+We can send a sample of data to the model through a POST request like this:
+
+```python
+r = requests.post("http://model_server:8000/predict", json=json_data)
+```
+
+Here json_data corresponds to the inputs of the model in JSON format. 
+
+This POST request will return the task_id of the prediction task that is requested:
+
+```
+{
+  "task_id": "353286k1-j125-6776-9889-f7b447nat1fcb"
+}
+```
+
+The task will be handled by Celery. In the meantime we can send a GET request to understand the status of the task:
+
+```python
+r = requests.get("http://model_server:8000/predict/353286k1-j125-6776-9889-f7b447nat1fcb")
+```
+
+This will either give us an update stating that the task is in progress:
+
+```
+{
+  "status": "IN_PROGRESS"
+}
+```
+
+Or return a status of "DONE" with the output of the task:
+
+```
+{
+  "status": "DONE",
+  "result": {
+    "outputs": [[...]]
+  }
+}
+```
 
 
 
