@@ -8,13 +8,8 @@ from typing import List
 from pydantic import BaseModel
 from celery import Celery
 from celery.result import AsyncResult
-from celery_worker import predict, celery_app
+from celery_worker import predict, celery_app, model
 from TFT import TemporalFusionTransformer, params, BATCH_SIZE, DECODER_STEPS
-
-
-model = TemporalFusionTransformer(params)
-state_dict = torch.load('./checkpoint.pth', map_location=torch.device('cpu'))
-model.load_state_dict(state_dict)
 
 
 class Inputs(BaseModel):
@@ -24,7 +19,7 @@ class Inputs(BaseModel):
 app = FastAPI()
 
 @app.get('/')
-def index():
+async def index():
     return {'message': 'online'}
 
 

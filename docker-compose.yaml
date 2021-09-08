@@ -6,21 +6,25 @@ services:
                 ports: 
                         - 6379:6379
 
+        model_server:
+                build: ./model
+                volumes:
+                        - ./model/app:/usr/src/app
+                working_dir: /usr/src/app
+                ports:
+                        - 8000:8000
+                depends_on:
+                        - redis
+
         celery_app:
                 build: ./model/celery
                 volumes:
                         - ./model/app:/usr/src/app
                 working_dir: /usr/src/app
-                command: celery worker -A celery_worker:celery_app -c 2 > log-worker.txt 2>&1
-
-        model_server:
-                build: ./model
-                volumes:
-                        - ./model/app:/usr/src/app
-                ports:
-                        - 8000:8000
+                command: celery -A celery_worker.celery_app worker --loglevel=INFO --without-gossip --without-mingle --without-heartbeat --pool=solo
                 depends_on:
                         - redis
+                        - model_server
 
         website_client:
                 build: ./website

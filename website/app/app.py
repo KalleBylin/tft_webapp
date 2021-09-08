@@ -65,7 +65,7 @@ content = html.Div(
         html.Hr(),
         dbc.Row(
             [
-                dbc.Col(dcc.Graph(id="my_close_price_graph"), 
+                dbc.Col(dcc.Graph(id="time_series_graph"), 
                         width={"size": 8, "offset": 2}),
             ]
         )
@@ -77,7 +77,7 @@ content = html.Div(
 app = dash.Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = html.Div([sidebar, content])
 
-@app.callback(Output('my_close_price_graph', 'figure'),
+@app.callback(Output('time_series_graph', 'figure'),
               Input('upload-data', 'contents'),
               State('upload-data', 'filename'),
               State('upload-data', 'last_modified'))
@@ -96,21 +96,22 @@ def parse_contents(contents, filename, date):
 
             json_data = {"inputs": df.values.tolist()}
             r = requests.post("http://model_server:8000/predict", json=json_data)
-            task_id = r.json()['task_id']
-            print("Task id:", task_id, flush=True)
+            task_id = json.loads(r.json())['task_id']
 
             status = "IN_PROGRESS"
             while status != "DONE":
-                print("Result not ready", flush=True)
+                print(status)
                 r = requests.get(f"http://model_server:8000/predict/{task_id}")
-                status = r.json()['status']
+                status = json.loads(r.json())['status']
                 time.sleep(2)
-
+            
             preds = np.array(json.loads(r.json())["result"]["outputs"])
+            attn = np.array(json.loads(r.json())["result"]["attention"])
 
             graph_data.append({'x': dates[252:], 'y': preds[252:,0], 'name': 'P10'})
             graph_data.append({'x': dates[252:], 'y': preds[252:,1], 'name': 'P50'})
             graph_data.append({'x': dates[252:], 'y': preds[252:,2], 'name': 'P90'})
+            graph_data.append({'x': dates[:252], 'y': attn[:252], 'name': 'Attention'})
 
             fig = {
                 'data': graph_data,
