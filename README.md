@@ -156,6 +156,10 @@ Or return a status of "DONE" with the output of the task:
 }
 ```
 
+Here is an example from the browser:
+
+![prediction](images/get_prediction.png)
+
 
 <!-- USAGE EXAMPLES -->
 ## Usage
